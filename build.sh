@@ -5,7 +5,7 @@ set -o errexit
 # Navigate to Django project directory
 cd saas_pos
 
-# Install dependencies
+# Install minimal dependencies (without Pillow to avoid build issues)
 pip install -r requirements.txt
 
 # Collect static files
