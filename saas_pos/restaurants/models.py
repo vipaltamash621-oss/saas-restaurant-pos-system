@@ -2,10 +2,6 @@
 from django.db import models
 from django.conf import settings
 import uuid
-import socket
-import qrcode
-from io import BytesIO
-from django.core.files import File
 
 
 
@@ -18,7 +14,7 @@ class Restaurant(models.Model):
     # Contact Info
     address = models.TextField(blank=True, null=True)
     phone = models.CharField(max_length=15, blank=True, null=True)
-    logo = models.ImageField(upload_to='restaurant_logos/', blank=True, null=True)
+    logo = models.CharField(max_length=500, blank=True, null=True, help_text="Image URL or path")
     
     # Settings (This was missing)
     is_active = models.BooleanField(default=True)
@@ -29,7 +25,7 @@ class Restaurant(models.Model):
     allowed_radius = models.IntegerField(default=50, help_text="Radius in meters")
     
     # Payment Settings (upi_id is removed)
-    payment_qr = models.ImageField(upload_to='restaurant_qrs/', blank=True, null=True, help_text="Upload PhonePe/Paytm QR Code")
+    payment_qr = models.CharField(max_length=500, blank=True, null=True, help_text="QR Code image URL or path")
     # NEW: Dynamic QR ke liye UPI ID zaroori hai
     upi_id = models.CharField(max_length=50, blank=True, null=True, help_text="Ex: 9876543210@paytm or merchant@upi")
     razorpay_key_id = models.CharField(max_length=100, blank=True, null=True)
@@ -53,7 +49,7 @@ class Restaurant(models.Model):
 class Category(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='categories')
     name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='category_images/', blank=True, null=True)
+    image = models.CharField(max_length=500, blank=True, null=True, help_text="Image URL or path")
     
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
@@ -87,7 +83,7 @@ class MenuItem(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to='food_images/')
+    image = models.CharField(max_length=500, blank=True, null=True, help_text="Food image URL or path")
     addon_groups = models.ManyToManyField(AddOnGroup, blank=True, related_name='menu_items') 
     is_veg = models.BooleanField(default=True)
     is_available = models.BooleanField(default=True)
@@ -104,33 +100,12 @@ class MenuItem(models.Model):
 class Table(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='tables')
     table_number = models.CharField(max_length=50)
-    qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
+    qr_code = models.CharField(max_length=500, blank=True, null=True, help_text="QR code image URL or path")
     unique_id = models.UUIDField(default=uuid.uuid4, editable=False)
 
     def save(self, *args, **kwargs):
-        if not self.qr_code:
-            # --- MAGIC CODE START: Auto-detect Current IP ---
-            try:
-                # Ye code computer ka asli LAN/Wi-Fi IP dhoond nikalega
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                host_ip = s.getsockname()[0]
-                s.close()
-            except:
-                host_ip = '127.0.0.1' # Agar IP na mile to localhost use karo
-            # --- MAGIC CODE END ---
-
-            print(f"Detected IP: {host_ip}") # Terminal me dikhega ki konsa IP uthaya
-
-            qr_data = f"http://{host_ip}:8000/menu/{self.restaurant.slug}/{self.unique_id}/"
-            
-            
-            qr_img = qrcode.make(qr_data)
-            canvas = BytesIO()
-            qr_img.save(canvas, format='PNG')
-            file_name = f'qr_{self.restaurant.slug}_{self.table_number}.png'
-            self.qr_code.save(file_name, File(canvas), save=False)
-            
+        # QR code generation disabled temporarily (no Pillow)
+        # Core POS functionality works without QR images
         super().save(*args, **kwargs)
         
     def __str__(self):
@@ -159,7 +134,7 @@ class Order(models.Model):
     transaction_id = models.CharField(max_length=100, blank=True, null=True, help_text="UPI Ref ID / Txn ID")
     payer_name = models.CharField(max_length=100, blank=True, null=True, help_text="Paid by")
 # --- NEW FIELD ---
-    payment_proof = models.ImageField(upload_to='payment_proofs/', blank=True, null=True, help_text="Upload Screenshot if needed")
+    payment_proof = models.CharField(max_length=500, blank=True, null=True, help_text="Payment screenshot URL or path")
     
 
     updated_at = models.DateTimeField(auto_now=True) # Ye track karega ki order last kab update hua

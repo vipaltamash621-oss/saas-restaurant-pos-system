@@ -13,7 +13,7 @@ class User(AbstractUser):
     
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='CUSTOMER')
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    profile_picture = models.CharField(max_length=500, blank=True, null=True, help_text="Profile image URL or path")
     face_encoding = models.JSONField(blank=True, null=True) # For attendance
 
     # Staff kis restaurant ka hai
