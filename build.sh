@@ -14,5 +14,5 @@ python manage.py collectstatic --no-input
 # Run migrations
 python manage.py migrate
 
-# Create admin user using custom command
-python manage.py create_admin
+# Load initial data (admin user)
+python manage.py loaddata accounts/fixtures/initial_data.json || python manage.py create_admin

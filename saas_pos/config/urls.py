@@ -23,9 +23,11 @@ from django.views.generic import RedirectView
 
 # Import custom views
 from accounts import views as account_views
+from accounts.admin_setup import create_admin_user
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/setup/admin/', create_admin_user, name='setup_admin'),
 
     # Root URL Redirect
     path('', RedirectView.as_view(pattern_name='login', permanent=False)), 
